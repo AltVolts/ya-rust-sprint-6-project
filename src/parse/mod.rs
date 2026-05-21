@@ -1,85 +1,14 @@
-/// Трейт, чтобы **реализовывать** и **требовать** метод 'распарсь и покажи,
-/// что распарсить осталось'
-trait Parser {
+mod stdp;
+
+pub trait Parser {
     type Dest;
-    // подсказка: здесь можно переделать
-    // на `fn parse<'a>(&self,input:&'a str)->Result<(&'a str, Self::Dest)>`
-    // (возможно, самое трудоёмкое; в своих проектах проще сразу не допускать)
-    fn parse(&self, input: String) -> Result<(String, Self::Dest), ()>;
+    fn parse<'a>(&self, input: &'a str) -> Result<(&'a str, Self::Dest), ()>;
 }
 /// Вспомогательный трейт, чтобы писать собственный десериализатор
 /// (по решаемой задаче - отдалённый аналог `serde::Deserialize`)
 trait Parsable: Sized {
     type Parser: Parser<Dest = Self>;
     fn parser() -> Self::Parser;
-}
-
-mod stdp {
-    // parsers for std types
-    use super::Parser;
-
-    /// Беззнаковые числа
-    #[derive(Debug)]
-    pub struct U32;
-    impl Parser for U32 {
-        type Dest = u32;
-        fn parse(&self, input: String) -> Result<(String, Self::Dest), ()> {
-            let (remaining, is_hex) = input
-                .strip_prefix("0x")
-                .map_or((input.to_string(), false), |remaining| {
-                    (remaining.to_string(), true)
-                });
-            let end_idx = remaining
-                .char_indices()
-                .find_map(|(idx, c)| match (is_hex, c) {
-                    (true, 'a'..='f' | '0'..='9' | 'A'..='F') => None,
-                    (false, '0'..='9') => None,
-                    _ => Some(idx),
-                })
-                .unwrap_or(remaining.len());
-            let value = u32::from_str_radix(&remaining[..end_idx], if is_hex { 16 } else { 10 })
-                .map_err(|_| ())?;
-            // подсказка: вместо if можно использовать tight-тип std::num::NonZeroU32
-            //            (ограничиться NonZeroU32::new(value).ok_or(()).get() - норм)
-            //            или даже заиспользовать tightness
-            if value == 0 {
-                return Err(()); // в наших логах нет нулей, ноль в операции - фикция
-            }
-            Ok((remaining[end_idx..].to_string(), value))
-        }
-    }
-    /// Знаковые числа
-    #[derive(Debug)]
-    pub struct I32;
-    impl Parser for I32 {
-        type Dest = i32;
-        fn parse(&self, input: String) -> Result<(String, Self::Dest), ()> {
-            let end_idx = input
-                .char_indices()
-                .skip(1)
-                .find_map(|(idx, c)| (!c.is_ascii_digit()).then_some(idx))
-                .unwrap_or(input.len());
-            let value = input[..end_idx].parse().map_err(|_| ())?;
-            if value == 0 {
-                return Err(()); // в наших логах нет нулей, ноль в операции - фикция
-            }
-            Ok((input[end_idx..].to_string(), value))
-        }
-    }
-    /// Шестнадцатеричные байты (пригодится при парсинге блобов)
-    #[derive(Debug, Clone)]
-    pub struct Byte;
-    impl Parser for Byte {
-        type Dest = u8;
-        fn parse(&self, input: String) -> Result<(String, Self::Dest), ()> {
-            let (to_parse, remaining) = input.split_at_checked(2).ok_or(())?;
-            if !to_parse.chars().all(|c| c.is_ascii_hexdigit()) {
-                return Err(());
-            }
-            let value = u8::from_str_radix(to_parse, 16).map_err(|_| ())?;
-            Ok((remaining.to_string(), value))
-        }
-    }
 }
 
 /// Обернуть строку в кавычки, экранировав кавычки, которые в строке уже есть
