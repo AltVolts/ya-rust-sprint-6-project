@@ -20,7 +20,8 @@ impl Parser for U32 {
             .unwrap_or(remaining.len());
         let raw = u32::from_str_radix(&remaining[..end_idx], if is_hex { 16 } else { 10 })
             .map_err(|_| ())?;
-        NonZeroU32::new(raw).ok_or(())
+        NonZeroU32::new(raw)
+            .ok_or(())
             .map(|nz| (&remaining[end_idx..], nz))
     }
 }
@@ -29,16 +30,22 @@ impl Parser for U32 {
 pub struct I32;
 impl Parser for I32 {
     type Dest = i32;
-    fn parse<'a>(&self, input: &'a str) -> Result<(&'a str, Self::Dest), ()> {
+    fn parse<'a>(&self, input: &'a str) -> Result<(&'a str, i32), ()> {
+        let mut chars = input.char_indices();
+        let start = match chars.next() {
+            Some((_, '+' | '-')) => 1,
+            Some(_) => 0,
+            None => return Err(()),
+        };
         let end_idx = input
             .char_indices()
-            .skip(1)
-            .find_map(|(idx, c)| (!c.is_ascii_digit()).then_some(idx))
+            .skip(start)
+            .find_map(|(idx, c)| if !c.is_ascii_digit() { Some(idx) } else { None })
             .unwrap_or(input.len());
-        let value = input[..end_idx].parse().map_err(|_| ())?;
-        if value == 0 {
-            return Err(()); // в наших логах нет нулей, ноль в операции - фикция
+        if end_idx == 0 || (start == 1 && end_idx == 1) {
+            return Err(()); // знак без цифр
         }
+        let value: i32 = input[..end_idx].parse().map_err(|_| ())?;
         Ok((&input[end_idx..], value))
     }
 }
