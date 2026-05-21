@@ -51,15 +51,16 @@
 use analysis::parse;
 use std::{env, fs};
 
-
-fn main() -> Result<(), Box<dyn std::error::Error>>  {
+fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Placeholder для экспериментов с cli");
 
-    let parsing_demo = r#"[UserBackets{"user_id":"Bob","backets":[Backet{"asset_id":"milk","count":3,},],},]"#.to_string();
+    let parsing_demo =
+        r#"[UserBackets{"user_id":"Bob","backets":[Backet{"asset_id":"milk","count":3,},],},]"#
+            .to_string();
     let announcements = parse::just_parse_anouncements(parsing_demo)?;
     println!("demo-parsed: {:?}", announcements);
 
-    let args:Vec<String> = env::args().collect();
+    let args: Vec<String> = env::args().collect();
     let filename = args.get(1).ok_or("Usage: program <filename>")?;
 
     println!(
@@ -74,4 +75,3 @@ fn main() -> Result<(), Box<dyn std::error::Error>>  {
     logs.iter().for_each(|parsed| println!("  {:?}", parsed));
     Ok(())
 }
-
