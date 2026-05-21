@@ -153,18 +153,17 @@ App::Journal BuyAsset UserBacket{"user_id":"Alice","backet":Backet{"asset_id":"m
 
     #[test]
     fn test_all() {
-        let refcell1: Rc<RefCell<Box<dyn MyReader>>> =
-            Rc::new(RefCell::new(Box::new(SOURCE1.as_bytes())));
-        assert_eq!(read_log(refcell1.clone(), READ_MODE_ALL, vec![]).len(), 1);
-        let refcell: Rc<RefCell<Box<dyn MyReader>>> =
-            Rc::new(RefCell::new(Box::new(SOURCE.as_bytes())));
-        let all_parsed = read_log(refcell.clone(), READ_MODE_ALL, vec![]);
+        // Проверка короткого лога (SOURCE1)
+        let parsed1 = read_log(SOURCE1.as_bytes(), ReadMode::All, vec![]);
+        assert_eq!(parsed1.len(), 1);
+        
+        // Проверка полного лога (SOURCE)
+        let all_parsed = read_log(SOURCE.as_bytes(), ReadMode::All, vec![]);
         println!("all parsed:");
-        all_parsed
-            .iter()
-            .for_each(|parsed| println!("  {:?}", parsed));
-        // 2 для начала и конца строки (чтобы первая и последняя кавычки на отдельных строках были)
-        // второе число - число пустых строк, которые оставлены для удобства чтения
+        all_parsed.iter().for_each(|parsed| println!("  {:?}", parsed));
+        
+        // Ожидаемое количество: общее число строк минус 2 (первая и последняя строки с кавычками)
+        // минус 7 пустых строк, оставленных для читаемости
         assert_eq!(all_parsed.len(), SOURCE.lines().count() - 2 - 7);
     }
 }

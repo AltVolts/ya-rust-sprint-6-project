@@ -57,7 +57,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let parsing_demo =
         r#"[UserBackets{"user_id":"Bob","backets":[Backet{"asset_id":"milk","count":3,},],},]"#
             .to_string();
-    let announcements = parse::just_parse_anouncements(parsing_demo)?;
+    let announcements = parse::just_parse_anouncements(parsing_demo).unwrap();
     println!("demo-parsed: {:?}", announcements);
 
     let args: Vec<String> = env::args().collect();
@@ -70,7 +70,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     );
     let file = fs::File::open(filename)?;
 
-    let logs = analysis::read_log(file, analysis::READ_MODE_ALL, vec![])?;
+    let logs = analysis::read_log(file, analysis::ReadMode::All, vec![]);
     println!("got logs:");
     logs.iter().for_each(|parsed| println!("  {:?}", parsed));
     Ok(())
