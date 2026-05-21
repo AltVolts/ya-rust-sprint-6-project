@@ -358,7 +358,7 @@ where
 {
     type Dest = (A0::Dest, A1::Dest);
     fn parse<'a>(&self, input: &'a str) -> Result<(&'a str, Self::Dest), ()> {
-        match self.parsers.0.parse(input.clone()) {
+        match self.parsers.0.parse(input) {
             Ok((remaining, a0)) => self
                 .parsers
                 .1
@@ -386,8 +386,8 @@ where
 {
     type Dest = (A0::Dest, A1::Dest, A2::Dest);
     fn parse<'a>(&self, input: &'a str) -> Result<(&'a str, Self::Dest), ()> {
-        match self.parsers.0.parse(input.clone()) {
-            Ok((remaining, a0)) => match self.parsers.1.parse(remaining.clone()) {
+        match self.parsers.0.parse(input) {
+            Ok((remaining, a0)) => match self.parsers.1.parse(remaining) {
                 Ok((remaining, a1)) => self
                     .parsers
                     .2
@@ -396,7 +396,7 @@ where
                 Err(()) => self
                     .parsers
                     .2
-                    .parse(remaining.clone())
+                    .parse(remaining)
                     .and_then(|(remaining, a2)| {
                         self.parsers
                             .1
@@ -405,15 +405,15 @@ where
                     }),
             },
             Err(()) => {
-                match self.parsers.1.parse(input.clone()) {
+                match self.parsers.1.parse(input) {
                     Ok((remaining, a1)) => {
-                        match self.parsers.0.parse(remaining.clone()) {
+                        match self.parsers.0.parse(remaining) {
                             Ok((remaining, a0)) => self
                                 .parsers
                                 .2
                                 .parse(remaining)
                                 .map(|(remaining, a2)| (remaining, (a0, a1, a2))),
-                            Err(()) => self.parsers.2.parse(remaining.clone()).and_then(
+                            Err(()) => self.parsers.2.parse(remaining).and_then(
                                 |(remaining, a2)| {
                                     self.parsers
                                         .0
@@ -426,15 +426,15 @@ where
                     Err(()) => self
                         .parsers
                         .2
-                        .parse(input.clone())
+                        .parse(input)
                         .and_then(|(remaining, a2)| {
-                            match self.parsers.0.parse(remaining.clone()) {
+                            match self.parsers.0.parse(remaining) {
                                 Ok((remaining, a0)) => self
                                     .parsers
                                     .1
                                     .parse(remaining)
                                     .map(|(remaining, a1)| (remaining, (a0, a1, a2))),
-                                Err(()) => self.parsers.1.parse(remaining.clone()).and_then(
+                                Err(()) => self.parsers.1.parse(remaining).and_then(
                                     |(remaining, a1)| {
                                         self.parsers
                                             .0
